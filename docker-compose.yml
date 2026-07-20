@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:17.9-alpine
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - laravel-api-starter:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+
+  # Uncomment to use redis
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - 6379:6379
+
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - ${APP_PORT}:${APP_PORT}
+
+volumes:
+  laravel-api-starter:
