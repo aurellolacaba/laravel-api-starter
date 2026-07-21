@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        
         // Stateless JWT guard: resolve the user from the Bearer access token.
         Auth::viaRequest('jwt', function (Request $request): ?User {
             $jwt = $request->bearerToken();
