@@ -47,4 +47,11 @@ class UserFactory extends Factory
             'phone_verified_at' => null,
         ]);
     }
+
+    public function admin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('admin');
+        });
+    }
 }
