@@ -54,4 +54,11 @@ class UserFactory extends Factory
             $user->assignRole('admin');
         });
     }
+
+    public function manager(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('manager');
+        });
+    }
 }
