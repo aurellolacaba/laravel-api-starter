@@ -40,6 +40,9 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            // 'permissions' => $user->getPermissionNames(),
             ...$this->tokens->issuePair($user, $request),
         ]);
     }
