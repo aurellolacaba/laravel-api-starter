@@ -4,52 +4,27 @@ namespace App\Services\Auth;
 
 use App\Models\RefreshToken;
 use App\Models\User;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Throwable;
 
 class TokenService
 {
     /**
-     * Issue a signed, short-lived access token for the given user.
+     * Issue a short-lived Sanctum access token for the given user.
      *
      * @return array{token: string, expires_in: int}
      */
     public function issueAccessToken(User $user): array
     {
-        $ttl = (int) config('jwt.access_ttl') * 60;
-        $now = now();
+        $ttl = (int) config('sanctum.expiration');
+        $expiresAt = $ttl > 0 ? now()->addMinutes($ttl) : null;
 
-        $claims = [
-            'iss' => config('jwt.issuer'),
-            'sub' => $user->getKey(),
-            'iat' => $now->timestamp,
-            'exp' => $now->copy()->addSeconds($ttl)->timestamp,
-            'jti' => (string) Str::uuid(),
-        ];
+        $token = $user->createToken('access', ['*'], $expiresAt);
 
         return [
-            'token' => JWT::encode($claims, config('jwt.secret'), config('jwt.algo')),
-            'expires_in' => $ttl,
+            'token' => $token->plainTextToken,
+            'expires_in' => $ttl * 60,
         ];
-    }
-
-    /**
-     * Decode and validate an access token. Returns the decoded payload, or
-     * null if the token is malformed, tampered with, or expired.
-     */
-    public function decodeAccessToken(string $jwt): ?object
-    {
-        JWT::$leeway = (int) config('jwt.leeway');
-
-        try {
-            return JWT::decode($jwt, new Key(config('jwt.secret'), config('jwt.algo')));
-        } catch (Throwable) {
-            return null;
-        }
     }
 
     /**
@@ -63,7 +38,7 @@ class TokenService
         RefreshToken::create([
             'user_id' => $user->getKey(),
             'token_hash' => $this->hash($plain),
-            'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
+            'expires_at' => now()->addMinutes((int) config('sanctum.refresh_ttl')),
             'ip_address' => $request?->ip(),
             'user_agent' => $request?->userAgent(),
         ]);
@@ -136,37 +111,6 @@ class TokenService
         RefreshToken::where('token_hash', $this->hash($plain))
             ->whereNull('revoked_at')
             ->update(['revoked_at' => now()]);
-    }
-
-    /**
-     * Deny-list an access token so it is rejected before its natural expiry
-     * (used on logout). The cache entry lives only until the token would have
-     * expired anyway, so it self-cleans.
-     */
-    public function blacklistAccessToken(object $payload): void
-    {
-        if (! isset($payload->jti, $payload->exp)) {
-            return;
-        }
-
-        $ttl = (int) $payload->exp - now()->timestamp;
-
-        if ($ttl > 0) {
-            Cache::put($this->blacklistKey($payload->jti), true, $ttl);
-        }
-    }
-
-    /**
-     * Whether the given access token id has been deny-listed.
-     */
-    public function accessTokenIsBlacklisted(string $jti): bool
-    {
-        return Cache::has($this->blacklistKey($jti));
-    }
-
-    protected function blacklistKey(string $jti): string
-    {
-        return "jwt:blacklist:{$jti}";
     }
 
     /**
