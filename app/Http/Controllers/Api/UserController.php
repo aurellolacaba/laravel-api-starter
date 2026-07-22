@@ -43,12 +43,15 @@ class UserController extends Controller
         $users = QueryBuilder::for(User::class)
             ->allowedFilters('first_name', 'last_name', 'email')
             ->allowedSorts('first_name', 'last_name', 'email')
-            ->paginate(5)
+            ->paginate(50)
             ->appends(request()->query());
 
-        return response()->json(
-            UserResource::collection($users),
-            Response::HTTP_OK,
-        );
+        return UserResource::collection($users)
+            ->additional([
+                'success' => true,
+                'message' => 'Users retrieved successfully.',
+            ])
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 }
