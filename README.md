@@ -4,6 +4,28 @@ An opinionated starter kit for building JSON APIs with Laravel 13. It ships with
 token-based authentication, role & permission management, consistent JSON error
 handling, and query-string filtering/sorting out of the box.
 
+## Using this template
+
+Created a new project from this template? Run the initializer first — it rewrites
+the placeholder identity (app name, composer package, `APP_NAME`, README title,
+Docker volume) to your project:
+
+```bash
+php scripts/init-project.php
+```
+
+It prompts for an application name, slug, vendor, and description (or pass them as
+flags for a non-interactive run):
+
+```bash
+php scripts/init-project.php \
+  --name="Acme API" --vendor=acme --slug=acme-api \
+  --description="Acme public API." --no-interaction
+```
+
+Useful flags: `--dry-run` previews changes without writing; `--self-destruct`
+removes the script afterwards. Then follow the installation steps below.
+
 ## Features
 
 - **Modular architecture** — feature code is organized into self-contained
