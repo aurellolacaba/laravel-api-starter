@@ -64,18 +64,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Revoke the given refresh token and immediately deny-list the current
-     * access token so it can no longer be used.
+     * Revoke the given refresh token and immediately delete the current access
+     * token so it can no longer be used.
      */
     public function logout(LogoutRequest $request): JsonResponse
     {
         $this->tokens->revokeRefreshToken($request->refresh_token);
 
-        if ($jwt = $request->bearerToken()) {
-            if ($payload = $this->tokens->decodeAccessToken($jwt)) {
-                $this->tokens->blacklistAccessToken($payload);
-            }
-        }
+        $request->user()->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Logged out.']);
     }
