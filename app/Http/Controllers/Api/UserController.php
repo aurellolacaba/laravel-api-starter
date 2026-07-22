@@ -8,6 +8,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Spatie\QueryBuilder\QueryBuilder;
 use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
@@ -34,6 +35,20 @@ class UserController extends Controller
         return response()->json(
             new UserResource($user),
             Response::HTTP_CREATED,
+        );
+    }
+
+    public function all(): JsonResponse
+    {
+        $users = QueryBuilder::for(User::class)
+            ->allowedFilters('first_name', 'last_name', 'email')
+            ->allowedSorts('first_name', 'last_name', 'email')
+            ->paginate(5)
+            ->appends(request()->query());
+
+        return response()->json(
+            UserResource::collection($users),
+            Response::HTTP_OK,
         );
     }
 }
